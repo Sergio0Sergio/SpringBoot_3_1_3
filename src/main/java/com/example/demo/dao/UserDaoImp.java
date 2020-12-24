@@ -2,7 +2,6 @@ package com.example.demo.dao;
 
 
 import com.example.demo.entity.User;
-
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -13,8 +12,8 @@ import java.util.List;
 @Repository
 public class UserDaoImp implements UserDao {
 
-  @PersistenceContext
-  private EntityManager em;
+    @PersistenceContext
+    private EntityManager em;
 
     @Override
     public void add(User user) {
@@ -37,7 +36,7 @@ public class UserDaoImp implements UserDao {
 
     @Override
     public void deleteUser(User user) {
-        em.remove(user);
+        em.remove(em.contains(user) ? user : em.merge(user));
     }
 
     @Override
@@ -46,6 +45,7 @@ public class UserDaoImp implements UserDao {
         em.detach(u);
         u.setUsername(user.getUsername());
         u.setPassword(user.getPassword());
+        u.setRoles(user.getRoles());
         em.merge(u);
     }
 

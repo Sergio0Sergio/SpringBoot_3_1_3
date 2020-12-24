@@ -8,8 +8,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import com.example.demo.security.SuccessUserHandler;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @EnableWebSecurity
@@ -33,14 +35,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
 
         http
+
                 .formLogin()
                 .loginPage("/login")
                 .successHandler(successUserHandler)
                 .loginProcessingUrl("/loginme")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .permitAll()
-                .and().csrf().disable();
+                .permitAll();
+                //.and().csrf().disable();
         http
                 .logout()
                 .permitAll()
@@ -48,12 +51,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .antMatchers("/login").anonymous()
-                .antMatchers("/userspace").access("hasAnyRole('ROLE_USER')")
-                .antMatchers("/").access("hasAnyRole('ROLE_ADMIN')").anyRequest().authenticated();
+
+                .antMatchers("/admin/*", "/user/**").access("hasAnyRole('ROLE_ADMIN')")
+                .antMatchers("/user/**", "/user/userspace","/user/userspace/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+                .anyRequest().authenticated();
     }
 
+
+    /*
+        @Bean
+        public static NoOpPasswordEncoder passwordEncoder() {
+            return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
+        }
+    */
     @Bean
-    public static NoOpPasswordEncoder passwordEncoder() {
-        return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
+    public static PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

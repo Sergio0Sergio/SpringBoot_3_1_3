@@ -1,77 +1,178 @@
 package com.example.demo.controller;
 
+import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
+import com.example.demo.service.RoleService;
 import com.example.demo.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/")
 public class UserController {
 
     private final UserService userService;
+    private final RoleService roleService;
+    private PasswordEncoder passwordEncoder;
 
-    public UserController(UserService userService) {
+    @Autowired
+    public UserController(UserService userService, RoleService roleService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.roleService = roleService;
+        this.passwordEncoder = passwordEncoder;
     }
+
 
     @GetMapping("/")
-    public String homePage(){
-        return "/users";
+    public String homePage() {
+        return "admin/users";
     }
 
-    @GetMapping("/users")
-    public String getUsers(ModelMap model) {
+    @GetMapping("/admin/users")
+    public String getUsers(Model model) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Role> showRoles = roleService.listRoles();
+        String userName = null;
+        if (principal instanceof UserDetails){
+            userName = ((UserDetails)principal).getUsername();
+        }
+        User currentUser = userService.getUserByName(userName);
+        model.addAttribute("currentUser", currentUser);
         model.addAttribute("users", userService.listUsers());
-        return "/users";
+        model.addAttribute("showRoles", showRoles);
+        return "admin/users";
     }
 
     @GetMapping("/login")
-    public String loginPage(ModelMap model) {
+    public String loginPage(Model model) {
         return "/login";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/admin/{id}")
     public String getUser(@PathVariable("id") long id, Model model) {
         model.addAttribute(userService.getUser(id));
-        return "show";
+        return "admin/show";
     }
 
-    @GetMapping("/new")
+    @GetMapping("/admin/new")
     public String newUser(Model model) {
-        model.addAttribute("user", new User());
-        return "new";
+        User user = new User();
+        List<Role> showRoles = roleService.listRoles();
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String userName = null;
+        if (principal instanceof UserDetails){
+            userName = ((UserDetails)principal).getUsername();
+        }
+        User currentUser = userService.getUserByName(userName);
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("user", user);
+        model.addAttribute("showRoles", showRoles);
+        return "admin/new";
     }
 
-    @GetMapping("/{id}/edit")
+    @GetMapping("/admin/{id}/edit")
     public String editUser(Model model, @PathVariable("id") long id) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String userName = null;
+        if (principal instanceof UserDetails){
+            userName = ((UserDetails)principal).getUsername();
+        }
+        User currentUser = userService.getUserByName(userName);
+        model.addAttribute("currentUser", currentUser);
         model.addAttribute("user", userService.getUser(id));
-        return "edit";
+        model.addAttribute("showRoles", roleService.listRoles());
+        return "admin/edit";
     }
 
-    @GetMapping("/userspace")
-    public String userspace(){
-        return "/userspace";
+
+    @GetMapping("/user/userspace/{id}")
+    public String userspace(Model model, @PathVariable("id") long id) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String userName = null;
+        if (principal instanceof UserDetails){
+            userName = ((UserDetails)principal).getUsername();
+        }
+        User currentUser = userService.getUserByName(userName);
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("user", userService.getUser(id));
+        return "user/userspace";
     }
 
-    @PostMapping("/new")
-    public String createUser(@ModelAttribute("user") User user) {
-        user.setRole(2, "USER");
+    @GetMapping("/admin/adminspace/{id}")
+    public String adminspace(Model model, @PathVariable("id") long id) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String userName = null;
+        if (principal instanceof UserDetails){
+            userName = ((UserDetails)principal).getUsername();
+        }
+        User currentUser = userService.getUserByName(userName);
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("user", userService.getUser(id));
+        return "/admin/users";
+    }
+
+    @PostMapping("/admin/new")
+    public String createUser(Model model, @ModelAttribute("user") User user) {
+
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userService.add(user);
-        return "redirect:/users";
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String userName = null;
+        if (principal instanceof UserDetails){
+            userName = ((UserDetails)principal).getUsername();
+        }
+        User currentUser = userService.getUserByName(userName);
+        model.addAttribute("currentUser", currentUser);
+
+        model.addAttribute("users", userService.listUsers());
+        return "admin/users";
     }
 
-    @PatchMapping("/{id}")
-    public String updateUser(@ModelAttribute("user") User user) {
+    @PostMapping("/admin/users/{id}")
+    public String updateUser(Model model, @ModelAttribute("user") User user) {
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         userService.updateUser(user);
-        return "redirect:/users";
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String userName = null;
+        if (principal instanceof UserDetails){
+            userName = ((UserDetails)principal).getUsername();
+        }
+        User currentUser = userService.getUserByName(userName);
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("users", userService.listUsers());
+        return "admin/users";
     }
-    @DeleteMapping("/{id}/delete")
-    public String deleteUser(@PathVariable("id") long id){
+
+    @PostMapping("/admin/{id}/delete")
+    public String deleteUser(Model model, @PathVariable("id") long id) {
         userService.deleteUser(userService.getUser(id));
-        return "redirect:/users";
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String userName = null;
+        if (principal instanceof UserDetails){
+            userName = ((UserDetails)principal).getUsername();
+        }
+        User currentUser = userService.getUserByName(userName);
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("users", userService.listUsers());
+        return "admin/users";
     }
 }
-//final
