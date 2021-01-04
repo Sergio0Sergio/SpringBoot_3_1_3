@@ -42,8 +42,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .loginProcessingUrl("/loginme")
                 .usernameParameter("username")
                 .passwordParameter("password")
-                .permitAll();
-                //.and().csrf().disable();
+                .permitAll()
+                .and().csrf().disable();
         http
                 .logout()
                 .permitAll()
@@ -51,7 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .antMatchers("/login").anonymous()
-
+                .antMatchers("/api/**", "/api/users/", "/api/users/*", "/api/roles/").access("hasAnyRole('ROLE_ADMIN')")
                 .antMatchers("/admin/*", "/user/**").access("hasAnyRole('ROLE_ADMIN')")
                 .antMatchers("/user/**", "/user/userspace","/user/userspace/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
                 .anyRequest().authenticated();

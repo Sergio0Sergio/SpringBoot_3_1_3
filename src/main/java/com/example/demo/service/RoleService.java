@@ -10,4 +10,5 @@ import java.util.List;
 @Service
 public interface RoleService {
     List<Role> listRoles();
+    Role getRoleByName(String name);
 }

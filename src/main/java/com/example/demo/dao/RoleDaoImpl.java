@@ -2,6 +2,7 @@ package com.example.demo.dao;
 
 
 import com.example.demo.entity.Role;
+import com.example.demo.entity.User;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
@@ -27,5 +28,13 @@ public class RoleDaoImpl implements RoleDao{
     public Role getRole(long id) {
         return em.find(Role.class, id);
 
+    }
+
+    @Override
+    public Role getRoleByName(String name) {
+        Query query = em.createQuery("SELECT role FROM Role role WHERE role.name = :n");
+        query.setParameter("n", name);
+        Role role = (Role) query.getSingleResult();
+        return role;
     }
 }
