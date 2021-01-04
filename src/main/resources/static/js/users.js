@@ -231,7 +231,7 @@ function showUserTable(result) {
                     var user_data = '';
                     user_data += '<tr>'
                     user_data += '<td>' + result.id + '</td>'
-                    user_data += "<td><a href=\"#\" id=\"showUser" + result.id + "\" text=\" " + result.username + "\" >" + result.username + "</a></td>"
+                    user_data += "<td><a id=\"showUser" + result.id + "\" text=\" " + result.username + "\" >" + result.username + "</a></td>"
                     user_data += '<td>' + result.password + '</td>'
                     user_data += '<td>' + '<table>'
                     $(result.roles).each(function (ru_rKey, ru_rValue) {
